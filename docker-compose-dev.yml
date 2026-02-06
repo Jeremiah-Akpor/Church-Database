@@ -18,27 +18,27 @@ services:
     
 
 
-  web:
-    build: .
-    container_name: church_django
-    restart: always
-    environment:
-      - DEBUG=${DEBUG:-False}
-      - SECRET_KEY=${SECRET_KEY}
-      - DB_NAME=${DB_NAME:-church_db}
-      - DB_USER=${DB_USER:-church_user}
-      - DB_PASSWORD=${DB_PASSWORD:-church_password}
-      - DB_HOST=db
-      - DB_PORT=5432
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0}
-    volumes:
-      - ./staticfiles:/app/staticfiles
-      - ./media:/app/media
-    ports:
-      - "8000:8000"
-    depends_on:
-      db:
-        condition: service_healthy
+  # web:
+  #   build: .
+  #   container_name: church_django
+  #   restart: always
+  #   environment:
+  #     - DEBUG=${DEBUG:-False}
+  #     - SECRET_KEY=${SECRET_KEY}
+  #     - DB_NAME=${DB_NAME:-church_db}
+  #     - DB_USER=${DB_USER:-church_user}
+  #     - DB_PASSWORD=${DB_PASSWORD:-church_password}
+  #     - DB_HOST=db
+  #     - DB_PORT=5432
+  #     - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0}
+  #   volumes:
+  #     - ./staticfiles:/app/staticfiles
+  #     - ./media:/app/media
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
 
   nginx:
     image: nginx:alpine
