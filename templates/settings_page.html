@@ -78,6 +78,65 @@
       font-size: 0.92rem;
       border-top: 1px solid var(--panel-border);
     }
+    .section {
+      padding: 1rem 1.4rem 1.4rem;
+      border-top: 1px solid var(--panel-border);
+    }
+    .section h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1.2rem;
+    }
+    .actions {
+      display: grid;
+      gap: 0.9rem;
+      grid-template-columns: 1fr 1fr;
+    }
+    .card {
+      background: var(--row);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 0.9rem;
+    }
+    .card h3 {
+      margin: 0 0 0.5rem;
+      font-size: 1rem;
+    }
+    input[type="text"], input[type="file"] {
+      width: 100%;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      background: #0b1428;
+      color: var(--text);
+      padding: 0.55rem 0.65rem;
+      margin-bottom: 0.55rem;
+    }
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 0.55rem 0.9rem;
+      background: #2563eb;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { background: #1d4ed8; }
+    .messages {
+      padding: 0.8rem 1.4rem 0;
+    }
+    .msg {
+      margin-bottom: 0.45rem;
+      padding: 0.55rem 0.7rem;
+      border-radius: 8px;
+      background: #17233d;
+      border: 1px solid #2c3f64;
+      color: var(--text);
+    }
+    .backups-table th { width: auto; }
+    .backups-table a { color: #93c5fd; text-decoration: none; }
+    .backups-table a:hover { text-decoration: underline; }
+    @media (max-width: 900px) {
+      .actions { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -86,6 +145,13 @@
       <h1>System Settings</h1>
       <p class="sub">Runtime configuration currently loaded by the Django process.</p>
     </div>
+    {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+      <div class="msg">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
 
     <table>
       {% for key, value in settings_items %}
@@ -96,10 +162,66 @@
       {% endfor %}
     </table>
 
+    <div class="section">
+      <h2>Database Backup</h2>
+      <div class="actions">
+        <div class="card">
+          <h3>Export Backup</h3>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="export_dump">
+            <input type="text" name="dump_name" placeholder="Optional filename (without .dump)">
+            <button type="submit" {% if not pg_supported %}disabled{% endif %}>Generate Full PG Dump</button>
+          </form>
+        </div>
+        <div class="card">
+          <h3>Import Backup</h3>
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="import_dump">
+            <input type="file" name="dump_file" accept=".dump" required>
+            <label style="display:block; margin:0.25rem 0 0.75rem;">
+              <input type="checkbox" name="confirm_reset" value="yes" required>
+              I understand the database will be reset before restore.
+            </label>
+            <button type="submit" {% if not pg_supported %}disabled{% endif %}>Reset & Import Dump</button>
+          </form>
+        </div>
+      </div>
+      {% if not pg_supported %}
+      <p style="margin-top:0.75rem; color:#fca5a5;">
+        Current DB engine is not PostgreSQL. Full dump mode is disabled.
+      </p>
+      {% endif %}
+    </div>
+
+    <div class="section">
+      <h2>Available Dumps</h2>
+      <table class="backups-table">
+        <tr>
+          <th>Filename</th>
+          <th>Size</th>
+          <th>Last Modified</th>
+          <th>Download</th>
+        </tr>
+        {% for file in backup_files %}
+        <tr>
+          <td><code>{{ file.name }}</code></td>
+          <td>{{ file.size_kb }} KB</td>
+          <td>{{ file.modified }}</td>
+          <td><a href="/settings/?download={{ file.name }}">Download</a></td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4">No backup dumps found in <code>backup/</code>.</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+
     <div class="foot">
-      Most values here come from environment variables. Restart the server after changing <code>.env</code>.
+      Most values here come from environment variables. Restart the server after changing <code>.env</code>. Import will reset the database first, then run PostgreSQL restore.
     </div>
   </div>
 </body>
 </html>
-

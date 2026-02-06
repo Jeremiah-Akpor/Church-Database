@@ -2,3 +2,6 @@
 */.env
 /.env
 /media/reports/*.pdf
+/backup/*.py
+/backup/*.dump
+/backup/*

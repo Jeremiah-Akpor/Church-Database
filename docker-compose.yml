@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:16
     container_name: church_postgres
-    restart: always
+    restart: unless-stopped
     user: "0:0"
     environment:
       POSTGRES_DB: ${DB_NAME:-church_db}
@@ -13,15 +11,24 @@ services:
       TZ: "Europe/Berlin"
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5402:5432"
-    
 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-church_user} -d ${DB_NAME:-church_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
 
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: church_django
-    restart: always
+    image: church-django-database:latest
+    restart: unless-stopped
+    user: "0:0"
+    env_file:
+      - .env
     environment:
       - DEBUG=${DEBUG:-False}
       - SECRET_KEY=${SECRET_KEY}
@@ -34,20 +41,28 @@ services:
     volumes:
       - ./staticfiles:/app/staticfiles
       - ./media:/app/media
-    ports:
-      - "8000:8000"
+      - ./backup:/app/backup
+      - ./logs:/app/logs
+    # ports:
+    #   - "127.0.0.1:8000:8000"
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/admin/login/ >/dev/null || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
 
   nginx:
     image: nginx:alpine
     container_name: church_nginx
-    restart: always
+    restart: unless-stopped
     user: "0:0"
     environment:
       - WEB_HOST=${WEB_HOST:-localhost}
-      - DJANGO_HOST=${DJANGO_HOST:-host.docker.internal}
+      - DJANGO_HOST=${DJANGO_HOST:-web}
       - DJANGO_PORT=${DJANGO_PORT:-8000}
     ports:
       - "80:80"
@@ -59,4 +74,11 @@ services:
       /bin/sh -c "envsubst '$$WEB_HOST $$DJANGO_HOST $$DJANGO_PORT' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf
       && nginx -g 'daemon off;'"
     depends_on:
-      - web
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 20s

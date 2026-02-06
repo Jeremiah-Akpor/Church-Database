@@ -1,58 +1,78 @@
-# Use Python 3.13 slim image
-FROM python:3.13-slim
+# Stage 1: Base build stage
+FROM python:3.12-slim AS builder
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV PIP_NO_CACHE_DIR=1
-ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+# Create the app directory
+RUN mkdir /app
 
-# Set work directory
+# Set the working directory
 WORKDIR /app
 
-# Install system dependencies
+# Set environment variables to optimize Python
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     libjpeg-dev \
     zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install dependencies first for caching benefit
+RUN pip install --upgrade pip --root-user-action=ignore
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir --root-user-action=ignore -r requirements.txt
+
+# Ensure postgres driver is available even when lock/export is stale
+RUN pip install --no-cache-dir --root-user-action=ignore psycopg2-binary
+
+# --- Stage 2: Production stage ---
+FROM python:3.12-slim
+
+# Receive host UID/GID at build time (with defaults)
+ARG APP_UID=1000
+ARG APP_GID=1000
+
+# Install runtime dependencies
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gettext \
+    postgresql-client \
+    libpq5 \
+    libjpeg62-turbo \
+    zlib1g \
     curl \
     netcat-traditional \
     && rm -rf /var/lib/apt/lists/*
 
-# Install pipenv
-RUN pip install --upgrade pip && \
-    pip install pipenv
+# Create group/user, create /app, and set ownership (idempotent)
+RUN set -eux; \
+    groupadd -g "${APP_GID}" -f appuser || true; \
+    id -u appuser >/dev/null 2>&1 || useradd -m -u "${APP_UID}" -g "${APP_GID}" appuser; \
+    mkdir -p /app; \
+    chown -R "${APP_UID}:${APP_GID}" /app
 
-# Copy Pipfile and Pipfile.lock
-COPY Pipfile Pipfile.lock ./
+# Set working dir
+WORKDIR /app
 
-# Install Python dependencies
-RUN pipenv install --deploy --system
+# Copy deps from builder
+COPY --from=builder /usr/local/lib/python3.12/site-packages/ /usr/local/lib/python3.12/site-packages/
+COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
-# Copy project
-COPY . .
+# Copy code (assign ownership at copy time)
+COPY --chown=${APP_UID}:${APP_GID} . .
 
-# Create necessary directories
-RUN mkdir -p /app/staticfiles /app/media /app/logs
+# Use project entrypoint script
+COPY --chown=${APP_UID}:${APP_GID} docker-entrypoint.sh /app/entrypoint.sh
 
-# Copy entrypoint script
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+# Prepare runtime directories
+RUN set -eux; \
+    mkdir -p /app/staticfiles /app/media /app/logs /app/backup; \
+    chown -R "${APP_UID}:${APP_GID}" /app/staticfiles /app/media /app/logs /app/backup; \
+    chmod -R 755 /app/staticfiles /app/media /app/logs /app/backup /app/entrypoint.sh
 
-# Create non-root user
-RUN useradd -m -u 1000 django && \
-    chown -R django:django /app /app/staticfiles /app/media /app/logs
+USER appuser
 
-# Switch to non-root user
-USER django
-
-# Expose port
 EXPOSE 8000
-
-# Set entrypoint
-ENTRYPOINT ["/docker-entrypoint.sh"]
-
-# Default command
-# CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--threads", "4", "--worker-class", "gthread", "--access-logfile", "-", "--error-logfile", "-", "--capture-output", "--enable-stdio-inheritance", "church_project.wsgi:application"]
+CMD ["/app/docker-entrypoint.sh"]

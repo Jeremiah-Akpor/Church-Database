@@ -28,3 +28,9 @@ commands:
   security:
     - pipenv run safety check
     - pipenv run python manage.py check --deploy --fail-level WARNING
+
+  backup_dump:
+    - pipenv run python manage.py dumpbackup --noinput
+
+  backup_dump_versioned:
+    - pipenv run python manage.py dumpbackup --noinput --filename "db_dump_$(date +%Y%m%d_%H%M%S)"

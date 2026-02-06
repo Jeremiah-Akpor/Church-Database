@@ -39,6 +39,13 @@ POSTGRES_PORT="${POSTGRES_PORT:-${DB_PORT:-5432}}"
 POSTGRES_DB="${POSTGRES_DB:-${DB_NAME:-church_db}}"
 POSTGRES_USER="${POSTGRES_USER:-${DB_USER:-church_user}}"
 POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-${DB_PASSWORD:-}}"
+
+# # Docker internal networking must use the container port, not host-published ports.
+# if [ "${POSTGRES_HOST}" = "db" ] && [ "${POSTGRES_PORT}" = "5402" ]; then
+#   echo "[WARN] Detected DB port 5402 for internal host 'db'; switching to 5432."
+#   POSTGRES_PORT="5432"
+#   export DB_PORT="5432"
+# fi
 export POSTGRES_HOST POSTGRES_PORT POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD
 
 if [ -n "${POSTGRES_HOST:-}" ]; then

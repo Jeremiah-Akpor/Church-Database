@@ -10,12 +10,13 @@ safety = "*"
 psycopg2-binary = "*"
 pillow = "*"
 gunicorn = "*"
-whitenoise = "*"
 rav = "*"
 reportlab = "*"
 qrcode = "*"
+django-extensions = "*"
+whitenoise = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.13"
+python_version = "3.12"
