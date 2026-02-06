@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>System Settings</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #111a2e;
+      --panel-border: #25304a;
+      --text: #e7eefc;
+      --muted: #9fb0d0;
+      --th: #192641;
+      --row: #0f1a31;
+      --row-alt: #0d172c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 2rem;
+      color: var(--text);
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: radial-gradient(circle at top, #13203d 0%, var(--bg) 50%);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+    }
+    .header {
+      padding: 1.25rem 1.4rem;
+      border-bottom: 1px solid var(--panel-border);
+    }
+    h1 {
+      margin: 0 0 0.35rem;
+      font-size: 1.8rem;
+    }
+    .sub {
+      margin: 0;
+      color: var(--muted);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid var(--panel-border);
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      width: 260px;
+      background: var(--th);
+      color: #c9d8f5;
+      font-weight: 600;
+    }
+    tr:nth-child(even) td {
+      background: var(--row);
+    }
+    tr:nth-child(odd) td {
+      background: var(--row-alt);
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      word-break: break-word;
+      color: #d6e3ff;
+    }
+    .foot {
+      padding: 1rem 1.4rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+      border-top: 1px solid var(--panel-border);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>System Settings</h1>
+      <p class="sub">Runtime configuration currently loaded by the Django process.</p>
+    </div>
+
+    <table>
+      {% for key, value in settings_items %}
+      <tr>
+        <th>{{ key }}</th>
+        <td><code>{{ value }}</code></td>
+      </tr>
+      {% endfor %}
+    </table>
+
+    <div class="foot">
+      Most values here come from environment variables. Restart the server after changing <code>.env</code>.
+    </div>
+  </div>
+</body>
+</html>
+

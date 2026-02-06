@@ -21,6 +21,9 @@ commands:
 
   django_local:
     - ./docker-entrypoint.sh
+  
+  django_make_migrations:
+    - pipenv run python manage.py makemigrations
 
   security:
     - pipenv run safety check

@@ -69,6 +69,7 @@ if not ALLOWED_HOSTS:
 INSTALLED_APPS = [
     'unfold',
     'unfold.contrib.inlines',
+    "unfold.contrib.forms",
     'unfold.contrib.import_export',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -79,6 +80,7 @@ INSTALLED_APPS = [
     'members',
     'events',
     'donations',
+    "mfa",
     # 'sermons',
 ]
 
@@ -89,6 +91,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    "mfa.middleware.MFAEnforcementMiddleware",
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -98,7 +101,7 @@ ROOT_URLCONF = 'church_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -163,7 +166,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = os.environ.get("TIME_ZONE", "Europe/Berlin")
 
 USE_I18N = True
 
@@ -191,6 +194,12 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", default=not DEBUG)
 SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", default=not DEBUG)
 CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", default=not DEBUG)
+CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
+if not CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS = [
+        "http://127.0.0.1:8000",
+        "http://localhost:8000",
+    ]
 SECURE_HSTS_SECONDS = int(
     os.environ.get("SECURE_HSTS_SECONDS", "31536000" if not DEBUG else "0")
 )
@@ -206,19 +215,21 @@ if not DEBUG and SECURE_HSTS_SECONDS <= 0:
         "SECURE_HSTS_SECONDS must be greater than 0 in non-debug mode."
     )
 
+MFA_ISSUER = os.environ.get("MFA_ISSUER", "The Overcomers House Church Management System")
+
 # Django Unfold Configuration
 UNFOLD = {
-    "SITE_TITLE": "Church Management System",
-    "SITE_HEADER": "Church Admin",
+    "SITE_TITLE": "The Overcomers House Church Management System",
+    "SITE_HEADER": "The Overcomers House Church Admin",
     "SITE_URL": "/",
-    "SITE_ICON": None,
+    "SITE_ICON": "/static/customfiles/logo.png",
     "SITE_LOGO": None,
     "SITE_SYMBOL": "church",
     "SITE_FAVICONS": [
         {
             "rel": "icon",
             "sizes": "32x32",
-            "href": "/static/favicon.ico",
+            "href": "/static/customfiles/logo.png",
         },
     ],
     "SHOW_HISTORY": True,
@@ -250,13 +261,13 @@ UNFOLD = {
         },
     },
     "SIDEBAR": {
-        "show_search": True,
+        "show_search": False,
         "show_all_applications": True,
         "navigation": [
             {
                 "title": "Church Management",
                 "separator": True,
-                "collapsible": True,
+                "collapsible": False,
                 "items": [
                     {
                         "title": "Dashboard",
@@ -282,6 +293,24 @@ UNFOLD = {
                         "title": "Department",
                         "icon": "apartment",
                         "link": "/admin/members/department/",
+                    },
+                    {
+                        "title": "Admin",
+                        "icon": "person",
+                        "link": "/admin/auth/user/",
+                        "permission": lambda request: request.user.is_superuser,
+                    },
+                    {
+                        "title": "Admin Groups",
+                        "icon": "groups",
+                        "link": "/admin/auth/group/",
+                        "permission": lambda request: request.user.is_superuser,
+                    },
+                    {
+                        "title": "Settings",
+                        "icon": "settings",
+                        "link": "/settings/",
+                        "permission": lambda request: request.user.is_superuser,
                     },
                     
                     # {

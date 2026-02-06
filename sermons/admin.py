@@ -1,14 +1,27 @@
 from django.contrib import admin
+from django.db import models
+from unfold.contrib.forms.widgets import WysiwygWidget
 from unfold.admin import ModelAdmin
 from unfold.admin import StackedInline
+from unfold.widgets import UnfoldAdminTextInputWidget
 
 from .models import SermonSeries, Sermon, SermonNote, BibleStudyMaterial
+
+DATE_TIME_OVERRIDES = {
+    models.DateField: {"widget": UnfoldAdminTextInputWidget(attrs={"type": "date"})},
+    models.TimeField: {"widget": UnfoldAdminTextInputWidget(attrs={"type": "time"})},
+    models.DateTimeField: {
+        "widget": UnfoldAdminTextInputWidget(attrs={"type": "datetime-local"})
+    },
+    models.TextField: {"widget": WysiwygWidget},
+}
 
 
 class SermonInline(StackedInline):
     """Inline for sermons in a series."""
 
     model = Sermon
+    formfield_overrides = DATE_TIME_OVERRIDES
     extra = 1
     fields = [
         "title",
@@ -24,12 +37,14 @@ class SermonNoteInline(StackedInline):
     """Inline for sermon notes."""
 
     model = SermonNote
+    formfield_overrides = DATE_TIME_OVERRIDES
     extra = 1
 
 
 @admin.register(SermonSeries)
 class SermonSeriesAdmin(ModelAdmin):
     """Admin configuration for SermonSeries model."""
+    formfield_overrides = DATE_TIME_OVERRIDES
 
     list_display = [
         "title",
@@ -67,6 +82,7 @@ class SermonSeriesAdmin(ModelAdmin):
 @admin.register(Sermon)
 class SermonAdmin(ModelAdmin):
     """Admin configuration for Sermon model."""
+    formfield_overrides = DATE_TIME_OVERRIDES
 
     list_display = [
         "title",
@@ -207,6 +223,7 @@ class SermonAdmin(ModelAdmin):
 @admin.register(SermonNote)
 class SermonNoteAdmin(ModelAdmin):
     """Admin configuration for SermonNote model."""
+    formfield_overrides = DATE_TIME_OVERRIDES
 
     list_display = [
         "title",
@@ -225,6 +242,7 @@ class SermonNoteAdmin(ModelAdmin):
 @admin.register(BibleStudyMaterial)
 class BibleStudyMaterialAdmin(ModelAdmin):
     """Admin configuration for BibleStudyMaterial model."""
+    formfield_overrides = DATE_TIME_OVERRIDES
 
     list_display = [
         "title",

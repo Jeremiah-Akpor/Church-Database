@@ -12,6 +12,8 @@ pillow = "*"
 gunicorn = "*"
 whitenoise = "*"
 rav = "*"
+reportlab = "*"
+qrcode = "*"
 
 [dev-packages]
 

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MFA Verification</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #111a2e;
+      --panel-border: #25304a;
+      --text: #e7eefc;
+      --muted: #9fb0d0;
+      --input-bg: #0d1528;
+      --input-border: #30405f;
+      --btn: #2563eb;
+      --btn-hover: #1d4ed8;
+      --msg: #17233d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: radial-gradient(circle at top, #13203d 0%, var(--bg) 50%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .card {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 1.4rem;
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    }
+    .msg {
+      margin: 0.5rem 0;
+      padding: 0.6rem 0.75rem;
+      border-radius: 8px;
+      background: var(--msg);
+      border: 1px solid #2c3f64;
+    }
+    input[type="text"] {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text);
+      padding: 0.65rem 0.75rem;
+      font-size: 1rem;
+    }
+    label { font-weight: 600; display: inline-block; margin-bottom: 0.35rem; }
+    p { color: var(--muted); line-height: 1.5; }
+    button {
+      margin-top: 0.8rem;
+      padding: 0.62rem 1rem;
+      border-radius: 8px;
+      border: 0;
+      background: var(--btn);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { background: var(--btn-hover); }
+    ul.errorlist { color: #ff9aa2; margin: 0.25rem 0 0.5rem; padding-left: 1.2rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Multi-Factor Authentication</h2>
+    <p>Enter the 6-digit code from your authenticator app.</p>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="msg">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      {{ form.as_p }}
+      <button type="submit">Verify</button>
+    </form>
+  </div>
+</body>
+</html>

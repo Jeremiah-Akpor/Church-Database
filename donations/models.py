@@ -1,5 +1,47 @@
+import calendar
+from datetime import date
+from decimal import Decimal
+
 from django.db import models
 from members.models import Member
+
+
+def _month_bounds(year: int, month: int) -> tuple[date, date]:
+    last_day = calendar.monthrange(year, month)[1]
+    return date(year, month, 1), date(year, month, last_day)
+
+
+def _months_ago_start(today: date, months: int) -> date:
+    month_index = (today.year * 12 + today.month - 1) - (months - 1)
+    year, month_zero = divmod(month_index, 12)
+    return date(year, month_zero + 1, 1)
+
+
+class DonationQuerySet(models.QuerySet):
+    def total_amount(self) -> Decimal:
+        total = self.aggregate(total=models.Sum("amount"))["total"]
+        return total or Decimal("0")
+
+    def for_month(self, year: int, month: int):
+        start_date, end_date = _month_bounds(year, month)
+        return self.filter(donation_date__gte=start_date, donation_date__lte=end_date)
+
+    def for_last_n_months(self, months: int, today: date | None = None):
+        if months < 1:
+            return self.none()
+        current = today or date.today()
+        start_date = _months_ago_start(current, months)
+        return self.filter(donation_date__gte=start_date, donation_date__lte=current)
+
+    def for_year(self, year: int):
+        return self.filter(donation_date__year=year)
+
+    def offertory(self):
+        return self.filter(category__name__iexact="offertory")
+
+
+class DonationManager(models.Manager.from_queryset(DonationQuerySet)):
+    pass
 
 
 class DonationCategory(models.Model):
@@ -26,6 +68,7 @@ class DonationCategory(models.Model):
 
 class Donation(models.Model):
     """Individual donation records."""
+    objects = DonationManager()
 
     PAYMENT_METHOD_CHOICES = [
         ("cash", "Cash"),
@@ -68,7 +111,7 @@ class Donation(models.Model):
         related_name="donations",
     )
     amount = models.DecimalField(max_digits=12, decimal_places=2)
-    currency = models.CharField(max_length=3, default="NGN")
+    currency = models.CharField(max_length=3, default="EUR")
     payment_method = models.CharField(
         max_length=20, choices=PAYMENT_METHOD_CHOICES, default="cash"
     )
@@ -134,6 +177,31 @@ class Donation(models.Model):
         if not self.tax_year and self.donation_date:
             self.tax_year = self.donation_date.year
         super().save(*args, **kwargs)
+
+    @classmethod
+    def offertory_total_last_month(cls) -> Decimal:
+        return cls.objects.offertory().for_last_n_months(1).total_amount()
+
+    @classmethod
+    def offertory_total_last_3_months(cls) -> Decimal:
+        return cls.objects.offertory().for_last_n_months(3).total_amount()
+
+    @classmethod
+    def offertory_total_last_6_months(cls) -> Decimal:
+        return cls.objects.offertory().for_last_n_months(6).total_amount()
+
+    @classmethod
+    def offertory_total_last_9_months(cls) -> Decimal:
+        return cls.objects.offertory().for_last_n_months(9).total_amount()
+
+    @classmethod
+    def offertory_total_year(cls, year: int | None = None) -> Decimal:
+        selected_year = year or date.today().year
+        return cls.objects.offertory().for_year(selected_year).total_amount()
+
+    @classmethod
+    def offertory_total_for_month(cls, year: int, month: int) -> Decimal:
+        return cls.objects.offertory().for_month(year, month).total_amount()
 
 
 class Pledge(models.Model):

@@ -40,7 +40,7 @@ class Member(models.Model):
     GENDER_CHOICES = [
         ("male", "Male"),
         ("female", "Female"),
-        ("other", "Other"),
+        # ("other", "Other"),
     ]
 
     MARITAL_STATUS_CHOICES = [
@@ -52,7 +52,7 @@ class Member(models.Model):
 
     # Personal Information
     user = models.OneToOneField(
-        User, on_delete=models.CASCADE, null=True, blank=True
+        User, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Admin User"
     )
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
@@ -75,7 +75,7 @@ class Member(models.Model):
     address = models.TextField(blank=True)
     city = models.CharField(max_length=100, blank=True)
     state = models.CharField(max_length=100, blank=True)
-    country = models.CharField(max_length=100, blank=True, default="Nigeria")
+    country = models.CharField(max_length=100, blank=True, default="Germany")
     occupation = models.CharField(max_length=100, blank=True)
     employer = models.CharField(max_length=100, blank=True)
 
