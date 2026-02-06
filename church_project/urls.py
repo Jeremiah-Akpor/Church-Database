@@ -17,12 +17,14 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.http import HttpResponse
 from django.urls import include, path
 from django.views.generic import RedirectView
 from .views import settings_page
 
 urlpatterns = [
     path("", RedirectView.as_view(url="/admin/", permanent=False)),
+    path("healthz/", lambda request: HttpResponse("ok", content_type="text/plain")),
     path("settings/", settings_page, name="settings-page"),
     path("mfa/", include("mfa.urls")),
     path('admin/', admin.site.urls),

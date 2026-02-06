@@ -13,6 +13,10 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='donation',
             name='currency',
-            field=models.CharField(default='EUR', max_length=3),
+            field=models.CharField(
+                choices=[('EUR', 'Euro'), ('USD', 'Dollar'), ('GBP', 'Pounds')],
+                default='EUR',
+                max_length=3,
+            ),
         ),
     ]

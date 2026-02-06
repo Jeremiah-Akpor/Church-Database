@@ -91,6 +91,12 @@ class Donation(models.Model):
         ("yearly", "Yearly"),
     ]
 
+    CURRENCY_CHOICES = [
+        ("EUR", "EUR"),
+        ("USD", "USD"),
+        ("GBP", "GBP"),
+    ]
+
     # Donor Information
     member = models.ForeignKey(
         Member,
@@ -111,7 +117,7 @@ class Donation(models.Model):
         related_name="donations",
     )
     amount = models.DecimalField(max_digits=12, decimal_places=2)
-    currency = models.CharField(max_length=3, default="EUR")
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default="EUR")
     payment_method = models.CharField(
         max_length=20, choices=PAYMENT_METHOD_CHOICES, default="cash"
     )

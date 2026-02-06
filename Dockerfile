@@ -24,8 +24,8 @@ RUN pip install --upgrade pip --root-user-action=ignore
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir --root-user-action=ignore -r requirements.txt
 
-# Ensure postgres driver is available even when lock/export is stale
-RUN pip install --no-cache-dir --root-user-action=ignore psycopg2-binary
+# Ensure critical runtime deps are available even when lock/export is stale
+RUN pip install --no-cache-dir --root-user-action=ignore psycopg2-binary gunicorn
 
 # --- Stage 2: Production stage ---
 FROM python:3.12-slim

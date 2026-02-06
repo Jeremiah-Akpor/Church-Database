@@ -190,38 +190,22 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Security hardening (strict by default in non-debug mode)
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", default=not DEBUG)
-SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", default=not DEBUG)
-CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", default=not DEBUG)
+# Security settings
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
 if not CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS = [
         "http://127.0.0.1:8000",
         "http://localhost:8000",
     ]
-SECURE_HSTS_SECONDS = int(
-    os.environ.get("SECURE_HSTS_SECONDS", "31536000" if not DEBUG else "0")
-)
-SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool(
-    "SECURE_HSTS_INCLUDE_SUBDOMAINS", default=not DEBUG
-)
-SECURE_HSTS_PRELOAD = env_bool("SECURE_HSTS_PRELOAD", default=not DEBUG)
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 
-if not DEBUG and SECURE_HSTS_SECONDS <= 0:
-    raise ImproperlyConfigured(
-        "SECURE_HSTS_SECONDS must be greater than 0 in non-debug mode."
-    )
-
-MFA_ISSUER = os.environ.get("MFA_ISSUER", "The Overcomers House Church Management System")
+MFA_ISSUER = os.environ.get("MFA_ISSUER", "The Overcomers Charple Church Management System")
 
 # Django Unfold Configuration
 UNFOLD = {
-    "SITE_TITLE": "The Overcomers House Church Management System",
-    "SITE_HEADER": "The Overcomers House Church Admin",
+    "SITE_TITLE": "The Overcomers Charple Church Management System",
+    "SITE_HEADER": "The Overcomers Charple Church Admin",
     "SITE_URL": "/",
     "SITE_ICON": "/static/customfiles/logo.png",
     "SITE_LOGO": None,
