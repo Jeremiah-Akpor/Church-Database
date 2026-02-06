@@ -1,0 +1,27 @@
+name: church
+commands:
+  setup:
+    - cp .env.example .env
+    - pipenv install
+
+  docker_up:
+    - docker-compose up --build -d
+
+  docker_logs:
+    - docker-compose logs -f web
+
+  docker_down:
+    - docker-compose down
+
+  django_container:
+    - docker-compose exec web python manage.py check --deploy --fail-level WARNING
+    - docker-compose exec web python manage.py migrate
+    - docker-compose exec web python manage.py collectstatic --noinput
+    - docker-compose exec web python manage.py createsuperuser
+
+  django_local:
+    - ./docker-entrypoint.sh
+
+  security:
+    - pipenv run safety check
+    - pipenv run python manage.py check --deploy --fail-level WARNING
